@@ -1,48 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { FieldRepository } from './field.repository';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
+import { Field } from '@prisma/client';
 
 @Injectable()
 export class FieldService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private fieldRepository: FieldRepository) {}
 
   // Create a new field
   async createField(createFieldDto: CreateFieldDto) {
-    return this.prisma.field.create({
-      data: {
-        fieldName: createFieldDto.fieldName,
-        type: createFieldDto.type,
-      },
-    });
+    return this.fieldRepository.create(createFieldDto);
   }
 
   // Get all fields
   async getAllFields() {
-    return this.prisma.field.findMany();
+    return this.fieldRepository.findAll();
   }
 
   // Get a field by ID
   async getFieldById(id: number) {
-    return this.prisma.field.findUnique({
-      where: { id },
-    });
+    return this.fieldRepository.findById(id);
   }
 
   // Update an existing field by ID
-  async updateField(id: number, updateFieldDto: UpdateFieldDto) {
-    return this.prisma.field.update({
-      where: { id },
-      data: {
-        fieldName: updateFieldDto.fieldName,
-        type: updateFieldDto.type,
-      },
-    });
+  async updateField(
+    id: number,
+    updateFieldDto: UpdateFieldDto,
+  ): Promise<Field> {
+    return this.fieldRepository.update(id, updateFieldDto);
   }
 
   // Delete a field by ID
   async deleteField(id: number) {
-    return this.prisma.field.delete({
-      where: { id },
-    });
+    return this.fieldRepository.delete(id);
   }
 }

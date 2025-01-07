@@ -14,21 +14,36 @@ datasource db {
 }
 
 model Ticket {
-  id          Int      @id @default(autoincrement())
-  name        String
-  status      String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  fields      Field[]  @relation("TicketFields") // Many-to-many relation
+  id           Int      @id @default(autoincrement())
+  name         String
+  status       String
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  fields       Field[]  @relation("TicketFields") // Many-to-many relation
+  assigneeId   Int // ID of the user who created the ticket (assignee)
+  assignedToId Int? // ID of the user assigned to solve the ticket (optional)
+
   @@map("tickets")
 }
 
 model Field {
-  id         Int      @id @default(autoincrement())
-  fieldName  String
-  type       String
-  tickets    Ticket[] @relation("TicketFields") // Many-to-many relation
+  id        Int      @id @default(autoincrement())
+  fieldName String   @unique
+  type      String
+  tickets   Ticket[] @relation("TicketFields") // Many-to-many relation
+
+  @@unique([fieldName, type]) // Composite unique constraint
   @@map("fields")
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String 
+  password  String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}

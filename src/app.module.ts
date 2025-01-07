@@ -4,10 +4,13 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { TicketModule } from './ticket/ticket.module';
 import { FieldModule } from './field/field.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { SwaggerSetupService } from './swagger-setup.service';
 
 @Module({
-  imports: [PrismaModule, TicketModule, FieldModule],
+  imports: [PrismaModule, AuthModule, TicketModule, FieldModule, UsersModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SwaggerSetupService],
 })
 export class AppModule {}
