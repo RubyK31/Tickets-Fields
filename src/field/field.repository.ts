@@ -1,8 +1,7 @@
 import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
   ConflictException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
@@ -27,7 +26,7 @@ export class FieldRepository {
       where: { id },
     });
     if (!field) {
-      throw new NotFoundException(`Field with ID ${id} does not exist.`);
+      throw new NotFoundException('Given field no longer exists.');
     }
     return field;
   }
@@ -48,7 +47,7 @@ export class FieldRepository {
     });
 
     if (existingField || sameNameField) {
-      throw new BadRequestException(`Given field already exists.`);
+      throw new ConflictException('Given field already exists.');
     }
 
     return this.prisma.field.create({
@@ -70,13 +69,12 @@ export class FieldRepository {
     const sameNameField = await this.prisma.field.findFirst({
       where: { fieldName: updateFieldDto.fieldName },
     });
+
     if (
       (fieldNameExists && fieldNameExists.id !== existingField.id) ||
       (sameNameField && sameNameField.id !== existingField.id)
     ) {
-      throw new ConflictException(
-        `Field with name '${updateFieldDto.fieldName}' already exists.`,
-      );
+      throw new ConflictException('Given field already exists.');
     }
 
     return this.prisma.field.update({
@@ -90,6 +88,14 @@ export class FieldRepository {
 
   // Delete a field by ID
   async delete(id: number) {
+    const field = await this.prisma.field.findUnique({
+      where: { id },
+    });
+
+    if (!field) {
+      throw new NotFoundException('Given field no longer exists');
+    }
+
     return this.prisma.field.delete({
       where: { id },
     });

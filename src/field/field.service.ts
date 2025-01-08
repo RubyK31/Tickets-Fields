@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FieldRepository } from './field.repository';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
-import { Field } from '@prisma/client';
 
 @Injectable()
 export class FieldService {
@@ -23,10 +22,7 @@ export class FieldService {
   }
 
   // Update an existing field by ID
-  async updateField(
-    id: number,
-    updateFieldDto: UpdateFieldDto,
-  ): Promise<Field> {
+  async updateField(id: number, updateFieldDto: UpdateFieldDto) {
     return this.fieldRepository.update(id, updateFieldDto);
   }
 

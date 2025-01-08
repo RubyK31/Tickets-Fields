@@ -1,27 +1,40 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@ApiTags('Users') // Group APIs under the 'Users' tag in Swagger
-@ApiBearerAuth() // Add the Bearer authentication option in Swagger
+function createResponse(message: string, data: any = null) {
+  return {
+    message,
+    data,
+  };
+}
+
+@ApiTags('Users') // Group APIs under 'Users' in Swagger
+@ApiBearerAuth() // Add Bearer auth option in Swagger
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  // Route to get all users
   @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOperation({ summary: 'Get all users' })
-  async getAllUsers(): Promise<any> {
-    return this.usersService.findAll();
+  async getAllUsers() {
+    const users = await this.usersService.findAll();
+    return createResponse('All users retrieved successfully', users);
   }
 
-  // Route to get a user by ID
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by ID' })
-  async getUserById(@Param('id') id: number): Promise<any> {
-    return this.usersService.findById(id);
+  @ApiParam({ name: 'id', type: Number, description: 'User ID' })
+  async getUserById(@Param('id') id: string) {
+    const user = await this.usersService.findById(Number(id));
+    return createResponse(`User details retrieved successfully`, user);
   }
 }

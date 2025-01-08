@@ -14,8 +14,13 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TicketService } from './ticket.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-
-@ApiTags('Tickets') // Group APIs under the 'Tickets' tag in Swagger
+function createResponse(message: string, data: any = null) {
+  return {
+    message,
+    data,
+  };
+}
+@ApiTags('Tickets')
 @ApiBearerAuth() // Add the Bearer authentication option in Swagger
 @Controller('tickets')
 export class TicketController {
@@ -25,22 +30,25 @@ export class TicketController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new ticket' })
   async createTicket(@Body() createTicketDto: CreateTicketDto, @Request() req) {
-    return this.ticketService.createTicket({
+    const ticket = await this.ticketService.createTicket(
       createTicketDto,
-      userId: req.user.id,
-    });
+      req.user.id,
+    );
+    return createResponse('Ticket created successfully', ticket);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all tickets' })
   async getAllTickets() {
-    return this.ticketService.getAllTickets();
+    const tickets = await this.ticketService.getAllTickets();
+    return createResponse('All tickets retrieved successfully', tickets);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get ticket by ID' })
   async getTicketById(@Param('id') id: string) {
-    return this.ticketService.getTicketById(Number(id));
+    const ticket = await this.ticketService.getTicketById(Number(id));
+    return createResponse('Ticket details retrieved successfully', ticket);
   }
 
   @Put(':id')
@@ -51,23 +59,24 @@ export class TicketController {
     @Body() updateTicketDto: UpdateTicketDto,
     @Request() req,
   ) {
-    return this.ticketService.updateTicket({
-      id: Number(id),
-      updateTicketDto,
-      userId: req.user.id,
-    });
+    return this.ticketService.updateTicket(id, updateTicketDto, req.user.id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a ticket by ID' })
   async deleteTicket(@Param('id') id: string) {
-    return this.ticketService.deleteTicket(Number(id));
+    await this.ticketService.deleteTicket(Number(id));
+    return { message: 'Ticket deleted successfully' };
   }
 
-  @UseGuards(JwtAuthGuard)
+  //@UseGuards(JwtAuthGuard)
   @Get('user/:userId')
   @ApiOperation({ summary: 'Get tickets assigned to a specific user' })
   async getTicketsByUserId(@Param('userId', ParseIntPipe) userId: number) {
-    return this.ticketService.findTicketsByUserId(userId);
+    const tickets = await this.ticketService.findTicketsByUserId(userId);
+    return createResponse(
+      'Tickets for the given user retrieved successfully',
+      tickets,
+    );
   }
 }
