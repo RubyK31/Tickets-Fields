@@ -1,22 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { TicketRepository } from './ticket.repository';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
+import { BaseRepository } from 'src/common/base.repository';
 
 @Injectable()
 export class TicketService {
-  constructor(private ticketRepository: TicketRepository) {}
+  constructor(
+    private ticketRepository: TicketRepository,
+    private baseRepository: BaseRepository,
+  ) {}
 
   async createTicket(createTicketDto: CreateTicketDto, userId: number) {
-    // Call repository method for ticket creation
     return this.ticketRepository.createTicket(createTicketDto, userId);
   }
 
   async getAllTickets() {
-    return this.ticketRepository.getAllTickets();
+    const orderBy = { updatedAt: 'desc' };
+    return this.baseRepository.findAll('ticket', orderBy, { fields: true });
   }
 
   async getTicketById(id: number) {
-    return this.ticketRepository.getTicketById(id);
+    return this.baseRepository.findById('ticket', id, { fields: true });
   }
 
   async updateTicket(
@@ -28,10 +32,22 @@ export class TicketService {
   }
 
   async deleteTicket(id: number) {
-    return this.ticketRepository.deleteTicket(id);
+    return await this.baseRepository.deleteById('ticket', id);
   }
 
   async findTicketsByUserId(userId: number) {
     return this.ticketRepository.findTicketsByUserId(userId);
+  }
+
+  async getFilteredTickets(
+    name?: string,
+    status?: string,
+    sortDirection?: 'asc' | 'desc',
+  ) {
+    return await this.ticketRepository.filterTickets(
+      name,
+      status,
+      sortDirection,
+    );
   }
 }

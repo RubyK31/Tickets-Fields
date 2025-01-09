@@ -9,14 +9,17 @@ import {
   UseGuards,
   Request,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TicketService } from './ticket.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-function createResponse(message: string, data: any = null) {
+// Utility function to create standardized responses
+function createResponse(message: string, count: number, data: any = null) {
   return {
     message,
+    count,
     data,
   };
 }
@@ -26,6 +29,24 @@ function createResponse(message: string, data: any = null) {
 export class TicketController {
   constructor(private ticketService: TicketService) {}
 
+  @Get('filter')
+  async filterTickets(
+    @Query('name') name?: string,
+    @Query('status') status?: string,
+    @Query('sortDirection') sortDirection?: 'asc' | 'desc',
+  ) {
+    const tickets = await this.ticketService.getFilteredTickets(
+      name,
+      status,
+      sortDirection,
+    );
+    return createResponse(
+      'Matching tickets retrieved successfully',
+      tickets.count,
+      tickets.data,
+    );
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new ticket' })
@@ -34,21 +55,25 @@ export class TicketController {
       createTicketDto,
       req.user.id,
     );
-    return createResponse('Ticket created successfully', ticket);
+    return createResponse('Ticket created successfully', 1, ticket);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all tickets' })
   async getAllTickets() {
     const tickets = await this.ticketService.getAllTickets();
-    return createResponse('All tickets retrieved successfully', tickets);
+    return createResponse(
+      'All tickets retrieved successfully',
+      tickets.count,
+      tickets.data,
+    );
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get ticket by ID' })
   async getTicketById(@Param('id') id: string) {
     const ticket = await this.ticketService.getTicketById(Number(id));
-    return createResponse('Ticket details retrieved successfully', ticket);
+    return createResponse('Ticket details retrieved successfully', 1, ticket);
   }
 
   @Put(':id')
@@ -59,7 +84,12 @@ export class TicketController {
     @Body() updateTicketDto: UpdateTicketDto,
     @Request() req,
   ) {
-    return this.ticketService.updateTicket(id, updateTicketDto, req.user.id);
+    const ticket = await this.ticketService.updateTicket(
+      id,
+      updateTicketDto,
+      req.user.id,
+    );
+    return createResponse('Ticket details updated successfully', 1, ticket);
   }
 
   @Delete(':id')
@@ -76,7 +106,8 @@ export class TicketController {
     const tickets = await this.ticketService.findTicketsByUserId(userId);
     return createResponse(
       'Tickets for the given user retrieved successfully',
-      tickets,
+      tickets.count,
+      tickets.data,
     );
   }
 }

@@ -2,14 +2,60 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { Ticket } from '@prisma/client';
+import { BaseRepository } from 'src/common/base.repository';
 
 @Injectable()
-export class TicketRepository {
-  constructor(private prisma: PrismaService) {}
+export class TicketRepository extends BaseRepository {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
+
+  async findTicketsByUserId(userId: number) {
+    const tickets = await this.prisma.ticket.findMany({
+      where: {
+        assignedToId: userId,
+      },
+      include: { fields: true },
+    });
+    const count = tickets.length;
+    return {
+      count: count,
+      data: tickets,
+    };
+  }
+
+  async filterTickets(
+    name?: string,
+    status?: string,
+    sortDirection: 'asc' | 'desc' = 'desc', // Default descending
+  ) {
+    if (!['asc', 'desc'].includes(sortDirection)) {
+      throw new BadRequestException(
+        'Invalid sort direction! Sorting allowed in asc or desc order.',
+      );
+    }
+
+    const tickets = await this.prisma.ticket.findMany({
+      where: {
+        AND: [
+          name ? { name: { contains: name, mode: 'insensitive' } } : {},
+          status ? { status: { equals: status, mode: 'insensitive' } } : {},
+        ],
+      },
+      include: { fields: true },
+      orderBy: { id: sortDirection },
+    });
+    const count = tickets.length;
+    return {
+      count: count,
+      data: tickets,
+    };
+  }
 
   async createTicket(
     createTicketDto: CreateTicketDto,
@@ -17,24 +63,8 @@ export class TicketRepository {
   ): Promise<Ticket> {
     const { fieldIds, assignedToId, ...ticketData } = createTicketDto;
 
-    // Validate assignedToId
-    if (assignedToId === userId) {
-      throw new BadRequestException(
-        'Ticket Assignee and Ticket Assigned to fields can not have same ids',
-      );
-    }
-
-    if (assignedToId) {
-      const assignedUser = await this.prisma.user.findUnique({
-        where: { id: assignedToId },
-      });
-
-      if (!assignedUser) {
-        throw new NotFoundException(
-          `Ticket can not be assigned to a non existent user.`,
-        );
-      }
-    }
+    //Handle Ticket Assignment
+    await this.handleTicketAssign(userId, assignedToId);
 
     // Handle fields
     const fields = await this.handleFields(fieldIds);
@@ -53,25 +83,6 @@ export class TicketRepository {
     });
   }
 
-  async getAllTickets() {
-    return this.prisma.ticket.findMany({
-      include: { fields: true },
-    });
-  }
-
-  async getTicketById(id: number): Promise<Ticket> {
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id },
-      include: { fields: true },
-    });
-
-    if (!ticket) {
-      throw new NotFoundException(`Given ticket does not exist.`);
-    }
-
-    return ticket;
-  }
-
   async updateTicket(
     id: string,
     updateTicketDto: UpdateTicketDto,
@@ -88,24 +99,8 @@ export class TicketRepository {
       throw new NotFoundException(`Ticket does not exist.`);
     }
 
-    // Validate assignedToId
-    if (assignedToId === userId) {
-      throw new BadRequestException(
-        'Ticket Assignee and Ticket Assigned to fields can not have same ids',
-      );
-    }
-
-    if (assignedToId) {
-      const assignedUser = await this.prisma.user.findUnique({
-        where: { id: assignedToId },
-      });
-
-      if (!assignedUser) {
-        throw new NotFoundException(
-          `Ticket can not be assigned to a new existing user.`,
-        );
-      }
-    }
+    //Handle Ticket Assignment
+    await this.handleTicketAssign(userId, assignedToId);
 
     // Handle fields
     const currentFieldIds = currentTicket.fields.map((field) => field.id) || [];
@@ -130,30 +125,6 @@ export class TicketRepository {
     });
   }
 
-  async deleteTicket(id: number) {
-    // Check if the ticket exists
-    const existingTicket = await this.prisma.ticket.findUnique({
-      where: { id },
-    });
-
-    if (!existingTicket) {
-      throw new NotFoundException(`Given ticket does not exist.`);
-    }
-
-    // Proceed to delete the ticket
-    return this.prisma.ticket.delete({
-      where: { id },
-    });
-  }
-
-  async findTicketsByUserId(userId: number) {
-    return this.prisma.ticket.findMany({
-      where: {
-        assignedToId: userId,
-      },
-    });
-  }
-
   private async handleFields(fieldIds: any[]) {
     return await Promise.all(
       fieldIds.map(async (fieldIdOrObj) => {
@@ -174,8 +145,8 @@ export class TicketRepository {
           });
 
           if (existingField) {
-            throw new BadRequestException(
-              `Field '${fieldIdOrObj.fieldName}' with type '${fieldIdOrObj.type}' already exists.`,
+            throw new ConflictException(
+              `Field with name: '${fieldIdOrObj.fieldName}' and type: '${fieldIdOrObj.type}' already exists.`,
             );
           }
 
@@ -188,5 +159,24 @@ export class TicketRepository {
         }
       }),
     );
+  }
+
+  private async handleTicketAssign(userId: number, assignedToId: number) {
+    if (assignedToId) {
+      const assignedUser = await this.prisma.user.findUnique({
+        where: { id: assignedToId },
+      });
+
+      if (!assignedUser) {
+        throw new NotFoundException(
+          `Ticket can not be assigned to a non existing user.`,
+        );
+      }
+    }
+    if (assignedToId === userId) {
+      throw new BadRequestException(
+        'Ticket Assignee and Ticket Assigned to fields can not have same ids',
+      );
+    }
   }
 }

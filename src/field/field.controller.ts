@@ -12,9 +12,10 @@ import { FieldService } from './field.service';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
 
 // Utility function to create standardized responses
-function createResponse(message: string, data: any = null) {
+function createResponse(message: string, count: number, data: any = null) {
   return {
     message,
+    count,
     data,
   };
 }
@@ -28,14 +29,18 @@ export class FieldController {
   @ApiOperation({ summary: 'Create a new field' })
   async createField(@Body() body: CreateFieldDto) {
     const field = await this.fieldService.createField(body);
-    return createResponse('Field created successfully', field);
+    return createResponse('Field created successfully', 1, field);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all fields' })
   async getAllFields() {
     const fields = await this.fieldService.getAllFields();
-    return createResponse('All fields retrieved successfully', fields);
+    return createResponse(
+      'All fields retrieved successfully',
+      fields.count,
+      fields.data,
+    );
   }
 
   @Get(':id')
@@ -43,7 +48,7 @@ export class FieldController {
   @ApiParam({ name: 'id', type: Number, description: 'Field ID' })
   async getFieldById(@Param('id') id: string) {
     const field = await this.fieldService.getFieldById(Number(id));
-    return createResponse(`Given field retrieved successfully`, field);
+    return createResponse(`Given field retrieved successfully`, 1, field);
   }
 
   @Put(':id')
@@ -51,7 +56,7 @@ export class FieldController {
   @ApiParam({ name: 'id', type: Number, description: 'Field ID' })
   async updateField(@Param('id') id: string, @Body() body: UpdateFieldDto) {
     const updatedField = await this.fieldService.updateField(Number(id), body);
-    return createResponse('Field updated successfully', updatedField);
+    return createResponse('Field updated successfully', 1, updatedField);
   }
 
   @Delete(':id')

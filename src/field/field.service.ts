@@ -1,33 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { FieldRepository } from './field.repository';
+import { BaseRepository } from 'src/common/base.repository';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
 
 @Injectable()
 export class FieldService {
-  constructor(private fieldRepository: FieldRepository) {}
+  constructor(private baseRepository: BaseRepository) {}
 
   // Create a new field
   async createField(createFieldDto: CreateFieldDto) {
-    return this.fieldRepository.create(createFieldDto);
+    const uniqueCheck = {
+      fieldName: createFieldDto.fieldName,
+    };
+    return this.baseRepository.create('field', createFieldDto, uniqueCheck);
   }
 
   // Get all fields
   async getAllFields() {
-    return this.fieldRepository.findAll();
+    const orderBy = { id: 'desc' };
+    return this.baseRepository.findAll('field', orderBy);
   }
 
   // Get a field by ID
   async getFieldById(id: number) {
-    return this.fieldRepository.findById(id);
+    return this.baseRepository.findById('field', id);
   }
 
   // Update an existing field by ID
   async updateField(id: number, updateFieldDto: UpdateFieldDto) {
-    return this.fieldRepository.update(id, updateFieldDto);
+    const uniqueCheck = {
+      fieldName: updateFieldDto.fieldName,
+    };
+    return this.baseRepository.update('field', id, updateFieldDto, uniqueCheck);
   }
 
   // Delete a field by ID
   async deleteField(id: number) {
-    return this.fieldRepository.delete(id);
+    return this.baseRepository.deleteById('field', id);
   }
 }
