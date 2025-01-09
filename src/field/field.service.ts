@@ -15,9 +15,9 @@ export class FieldService {
   }
 
   // Get all fields
-  async getAllFields() {
+  async getAllFields(pageNumber: number) {
     const orderBy = { id: 'desc' };
-    return this.baseRepository.findAll('field', orderBy);
+    return this.baseRepository.findAll('field', pageNumber, orderBy);
   }
 
   // Get a field by ID

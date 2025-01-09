@@ -16,10 +16,10 @@ import { TicketService } from './ticket.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 // Utility function to create standardized responses
-function createResponse(message: string, count: number, data: any = null) {
+function createResponse(message: string, totalCount: number, data: any = null) {
   return {
     message,
-    count,
+    totalCount,
     data,
   };
 }
@@ -60,11 +60,12 @@ export class TicketController {
 
   @Get()
   @ApiOperation({ summary: 'Get all tickets' })
-  async getAllTickets() {
-    const tickets = await this.ticketService.getAllTickets();
+  async getAllTickets(@Query('pagenumber') pagenumber?: number) {
+    const pageNumber = pagenumber ? pagenumber : 1;
+    const tickets = await this.ticketService.getAllTickets(pageNumber);
     return createResponse(
       'All tickets retrieved successfully',
-      tickets.count,
+      tickets.totalRecords,
       tickets.data,
     );
   }

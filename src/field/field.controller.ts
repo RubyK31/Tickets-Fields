@@ -6,16 +6,17 @@ import {
   Delete,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { FieldService } from './field.service';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
 
 // Utility function to create standardized responses
-function createResponse(message: string, count: number, data: any = null) {
+function createResponse(message: string, totalCount: number, data: any = null) {
   return {
     message,
-    count,
+    totalCount,
     data,
   };
 }
@@ -34,11 +35,12 @@ export class FieldController {
 
   @Get()
   @ApiOperation({ summary: 'Get all fields' })
-  async getAllFields() {
-    const fields = await this.fieldService.getAllFields();
+  async getAllFields(@Query('pagenumber') pagenumber?: number) {
+    const pageNumber = pagenumber ? pagenumber : 1;
+    const fields = await this.fieldService.getAllFields(pageNumber);
     return createResponse(
       'All fields retrieved successfully',
-      fields.count,
+      fields.totalRecords,
       fields.data,
     );
   }

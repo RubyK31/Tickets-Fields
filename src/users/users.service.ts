@@ -23,6 +23,7 @@ export class UsersService {
   async findAll() {
     return this.usersRepository.findAll();
   }
+
   async comparePasswords(
     plainPassword: string,
     hashedPassword: string,

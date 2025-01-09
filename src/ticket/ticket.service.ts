@@ -14,9 +14,11 @@ export class TicketService {
     return this.ticketRepository.createTicket(createTicketDto, userId);
   }
 
-  async getAllTickets() {
+  async getAllTickets(pageNumber: number) {
     const orderBy = { updatedAt: 'desc' };
-    return this.baseRepository.findAll('ticket', orderBy, { fields: true });
+    return this.baseRepository.findAll('ticket', pageNumber, orderBy, {
+      fields: true,
+    });
   }
 
   async getTicketById(id: number) {

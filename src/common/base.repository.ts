@@ -5,9 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { BaseRepositoryInterface } from './base-repository.interface';
 
 @Injectable()
-export class BaseRepository {
+export class BaseRepository implements BaseRepositoryInterface {
   constructor(protected prisma: PrismaService) {}
 
   async findById(
@@ -30,21 +31,31 @@ export class BaseRepository {
 
   async findAll(
     modelName: string,
+    pageNumber: number = 1,
     orderBy?: object,
     include?: Record<string, any>,
   ): Promise<any> {
+    const recordsPerPage = 5;
+
     const models = await this.prisma[modelName].findMany({
+      skip: (pageNumber - 1) * recordsPerPage,
+      take: recordsPerPage,
       orderBy,
       include,
     });
+
     if (!models || models.length === 0) {
       throw new NotFoundException(
         `No ${modelName.charAt(0).toUpperCase() + modelName.slice(1)} records found.`,
       );
     }
+
     const count = await this.prisma[modelName].count();
+
     return {
-      count: count,
+      totalRecords: count,
+      totalPages: Math.ceil(count / recordsPerPage),
+      currentPage: pageNumber,
       data: models,
     };
   }
