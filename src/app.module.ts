@@ -8,9 +8,12 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SwaggerSetupService } from './swagger-setup.service';
 import { RolesModule } from './roles/roles.module';
+import { ConfigModule } from '@nestjs/config';
+import { EmailService } from './email/email.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     PrismaModule,
     AuthModule,
     TicketModule,
@@ -19,6 +22,6 @@ import { RolesModule } from './roles/roles.module';
     RolesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SwaggerSetupService],
+  providers: [AppService, SwaggerSetupService, EmailService],
 })
 export class AppModule {}

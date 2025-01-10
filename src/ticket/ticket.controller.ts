@@ -56,6 +56,8 @@ export class TicketController {
       createTicketDto,
       req.user.id,
     );
+    // Send email after ticket creation
+    await this.ticketService.sendTicketCreationEmail(ticket);
     return createResponse('Ticket created successfully', 1, ticket);
   }
 

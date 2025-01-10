@@ -71,7 +71,7 @@ export class UpdateTicketDto {
     description: 'ID of the user assigned to this ticket',
     example: 3,
   })
-  @IsNumber()
+  @IsNumber({}, { message: 'Enter a valid valid number' })
   @IsOptional()
   assignedToId?: number;
 
