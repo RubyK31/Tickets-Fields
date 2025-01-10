@@ -4,7 +4,7 @@ import { UsersController } from './users.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { UsersRepository } from './users.repository';
-import { BaseRepository } from 'src/common/base.repository';
+import { BaseRepository } from 'src/common/repository/base.repository';
 
 @Module({
   imports: [PrismaModule],

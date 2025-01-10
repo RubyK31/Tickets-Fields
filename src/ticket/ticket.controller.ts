@@ -15,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TicketService } from './ticket.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RoleGuard } from 'src/auth/role.guard';
 // Utility function to create standardized responses
 function createResponse(message: string, totalCount: number, data: any = null) {
   return {
@@ -24,7 +25,8 @@ function createResponse(message: string, totalCount: number, data: any = null) {
   };
 }
 @ApiTags('Tickets')
-@ApiBearerAuth() // Add the Bearer authentication option in Swagger
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tickets')
 export class TicketController {
   constructor(private ticketService: TicketService) {}
@@ -48,7 +50,6 @@ export class TicketController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new ticket' })
   async createTicket(@Body() createTicketDto: CreateTicketDto, @Request() req) {
     const ticket = await this.ticketService.createTicket(
@@ -58,6 +59,7 @@ export class TicketController {
     return createResponse('Ticket created successfully', 1, ticket);
   }
 
+  @UseGuards(RoleGuard)
   @Get()
   @ApiOperation({ summary: 'Get all tickets' })
   async getAllTickets(@Query('pagenumber') pagenumber?: number) {
@@ -72,16 +74,15 @@ export class TicketController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get ticket by ID' })
-  async getTicketById(@Param('id') id: string) {
-    const ticket = await this.ticketService.getTicketById(Number(id));
+  async getTicketById(@Param('id') id: number, @Request() req) {
+    const ticket = await this.ticketService.getTicketById(id, req.user.id);
     return createResponse('Ticket details retrieved successfully', 1, ticket);
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update a ticket by ID' })
   async updateTicket(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Body() updateTicketDto: UpdateTicketDto,
     @Request() req,
   ) {
@@ -95,12 +96,11 @@ export class TicketController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a ticket by ID' })
-  async deleteTicket(@Param('id') id: string) {
-    await this.ticketService.deleteTicket(Number(id));
+  async deleteTicket(@Param('id') id: number, @Request() req) {
+    await this.ticketService.deleteTicket(id, req.user.id);
     return { message: 'Ticket deleted successfully' };
   }
 
-  //@UseGuards(JwtAuthGuard)
   @Get('user/:userId')
   @ApiOperation({ summary: 'Get tickets assigned to a specific user' })
   async getTicketsByUserId(@Param('userId', ParseIntPipe) userId: number) {

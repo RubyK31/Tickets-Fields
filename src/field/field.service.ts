@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from 'src/common/base.repository';
+import { BaseRepository } from 'src/common/repository/base.repository';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
 
 @Injectable()

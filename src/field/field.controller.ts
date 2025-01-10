@@ -7,10 +7,13 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { FieldService } from './field.service';
 import { CreateFieldDto, UpdateFieldDto } from './dto/field.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RoleGuard } from 'src/auth/role.guard';
 
 // Utility function to create standardized responses
 function createResponse(message: string, totalCount: number, data: any = null) {
@@ -20,7 +23,7 @@ function createResponse(message: string, totalCount: number, data: any = null) {
     data,
   };
 }
-
+@UseGuards(JwtAuthGuard)
 @ApiTags('Fields')
 @Controller('fields')
 export class FieldController {
@@ -61,6 +64,7 @@ export class FieldController {
     return createResponse('Field updated successfully', 1, updatedField);
   }
 
+  @UseGuards(RoleGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a field by ID' })
   @ApiParam({ name: 'id', type: Number, description: 'Field ID' })

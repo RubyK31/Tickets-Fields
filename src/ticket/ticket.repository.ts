@@ -3,11 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto, UpdateTicketDto } from './dto/ticket.dto';
 import { Ticket } from '@prisma/client';
-import { BaseRepository } from 'src/common/base.repository';
+import { BaseRepository } from 'src/common/repository/base.repository';
 
 @Injectable()
 export class TicketRepository extends BaseRepository {
@@ -84,7 +85,7 @@ export class TicketRepository extends BaseRepository {
   }
 
   async updateTicket(
-    id: string,
+    id: number,
     updateTicketDto: UpdateTicketDto,
     userId: number,
   ): Promise<Ticket> {
@@ -98,31 +99,39 @@ export class TicketRepository extends BaseRepository {
     if (!currentTicket) {
       throw new NotFoundException(`Ticket does not exist.`);
     }
+    const user = await super.findById('user', userId);
+    const ticketAssignee = currentTicket.assigneeId;
+    if (userId === currentTicket.assigneeId || (user && user.roleId === 1)) {
+      //Handle Ticket Assignment
+      await this.handleTicketAssign(ticketAssignee, assignedToId);
 
-    //Handle Ticket Assignment
-    await this.handleTicketAssign(userId, assignedToId);
+      // Handle fields
+      const currentFieldIds =
+        currentTicket.fields.map((field) => field.id) || [];
+      const fields = await this.handleFields(fieldIds);
 
-    // Handle fields
-    const currentFieldIds = currentTicket.fields.map((field) => field.id) || [];
-    const fields = await this.handleFields(fieldIds);
+      const fieldsToDisassociate = currentFieldIds.filter(
+        (fieldId) => !fieldIds.includes(fieldId),
+      );
 
-    const fieldsToDisassociate = currentFieldIds.filter(
-      (fieldId) => !fieldIds.includes(fieldId),
-    );
-
-    return this.prisma.ticket.update({
-      where: { id: Number(id) },
-      data: {
-        ...ticketData,
-        assigneeId: userId,
-        assignedToId,
-        fields: {
-          connect: fields.map((field) => ({ id: field.id })),
-          disconnect: fieldsToDisassociate.map((id) => ({ id })),
+      return this.prisma.ticket.update({
+        where: { id: Number(id) },
+        data: {
+          ...ticketData,
+          assigneeId: ticketAssignee,
+          assignedToId,
+          fields: {
+            connect: fields.map((field) => ({ id: field.id })),
+            disconnect: fieldsToDisassociate.map((id) => ({ id })),
+          },
         },
-      },
-      include: { fields: true },
-    });
+        include: { fields: true },
+      });
+    } else {
+      throw new ForbiddenException(
+        'Access denied for performing this operation!',
+      );
+    }
   }
 
   private async handleFields(fieldIds: any[]) {
@@ -161,7 +170,10 @@ export class TicketRepository extends BaseRepository {
     );
   }
 
-  private async handleTicketAssign(userId: number, assignedToId: number) {
+  private async handleTicketAssign(
+    ticketAssignee: number,
+    assignedToId: number,
+  ) {
     if (assignedToId) {
       const assignedUser = await this.prisma.user.findUnique({
         where: { id: assignedToId },
@@ -173,7 +185,7 @@ export class TicketRepository extends BaseRepository {
         );
       }
     }
-    if (assignedToId === userId) {
+    if (assignedToId === ticketAssignee) {
       throw new BadRequestException(
         'Ticket Assignee and Ticket Assigned to fields can not have same ids',
       );

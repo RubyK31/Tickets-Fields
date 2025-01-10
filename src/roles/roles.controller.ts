@@ -7,11 +7,14 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { RoleService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RoleGuard } from 'src/auth/role.guard';
 
 // Utility function to create standardized responses
 function createResponse(message: string, totalCount: number, data: any = null) {
@@ -22,6 +25,7 @@ function createResponse(message: string, totalCount: number, data: any = null) {
   };
 }
 
+@UseGuards(JwtAuthGuard, RoleGuard)
 @ApiTags('Roles')
 @Controller('roles')
 export class RoleController {

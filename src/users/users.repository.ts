@@ -67,15 +67,4 @@ export class UsersRepository {
       where: { email },
     });
   }
-
-  async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        createdAt: true,
-      },
-    });
-  }
 }
