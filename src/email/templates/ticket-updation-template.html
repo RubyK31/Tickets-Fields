@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Update Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #5189d3;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    p {
+      font-size: 16px;
+      color: #555;
+      margin: 10px 0;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f9f9fb;
+      border: 1px solid #e1e1f0;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    li strong {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .from-to {
+      display: flex;
+      flex-direction: column;
+      padding-left: 20px;
+    }
+    .from-to span {
+      font-size: 14px;
+      color: #666;
+    }
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      padding-top: 20px;
+      border-top: 1px solid #e1e1f0;
+    }
+    .footer a {
+      color: #5189d3;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 15px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Ticket Update Notification</h2>
+    <p>Hi Admin,</p>
+    <p>The following updates were made to ticket <strong>#{{ticketId}}</strong>:</p>
+    <ul>
+      {{#each updatedFields}}
+        <li>
+          <strong>{{@key}}:</strong>
+          <div class="from-to">
+            <span><strong>From:</strong>{{this.old}}</span>
+            <br>
+            <span><strong>To:</strong> {{this.new}}</span>
+          </div>
+        </li>
+      {{/each}}
+    </ul>
+    <p class="footer">
+      Warm Regards from Support Team
+    </p>
+  </div>
+</body>
+</html>
